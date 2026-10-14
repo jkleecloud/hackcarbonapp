@@ -1,0 +1,54 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f6f8f4">
+    <title>Goodfoot — Unit tests</title>
+    <link rel="stylesheet" href="{% static 'goodfoot/styles.css' %}">
+    <style>
+      .main-area { margin: 0; }
+      .test-content { margin: 0 auto; max-width: 860px; padding: 36px 22px; }
+      .test-header { align-items: center; display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; margin-bottom: 20px; }
+      .test-header p { color: #89958b; font-size: 10px; line-height: 1.6; margin: 8px 0 0; }
+      .test-status { border-radius: 7px; font-size: 10px; font-weight: 700; padding: 9px 12px; }
+      .test-status.pending { background: #f2f4ef; color: #748176; }
+      .test-status.passed { background: #eaf3eb; color: #31744d; }
+      .test-status.failed { background: #faece9; color: #a34537; }
+      .test-list { display: grid; gap: 7px; list-style: none; margin: 0; padding: 0; }
+      .test-result { align-items: flex-start; background: white; border: 1px solid #e9ede7; border-radius: 7px; display: flex; gap: 9px; padding: 11px 13px; }
+      .test-result.pass { color: #31744d; }
+      .test-result.fail { border-color: #edc8c1; color: #a34537; }
+      .test-result-icon { font-size: 11px; font-weight: 700; }
+      .test-result-copy { color: #526156; font-size: 9px; line-height: 1.6; }
+      .test-result.fail .test-result-copy { color: #a34537; }
+      .test-back { color: #47845b; font-size: 9px; font-weight: 600; text-decoration: none; }
+      .test-back:hover { text-decoration: underline; }
+      .test-note { color: #929d94; font-size: 8px; line-height: 1.6; margin-top: 18px; }
+      @media (max-width: 500px) { .test-content { padding: 24px 14px; } }
+    </style>
+  </head>
+  <body>
+    <main class="main-area">
+      <section class="test-content" aria-labelledby="test-title">
+        <header class="test-header">
+          <div>
+            <div class="eyebrow"><span class="eyebrow-line"></span> GOODFOOT PROTOTYPE</div>
+            <h1 id="test-title">Calculation unit tests</h1>
+            <p>Checks for commute, work travel, remote energy, and boundary cases. No installation required.</p>
+          </div>
+          <a class="test-back" href="/">← Back to the app</a>
+        </header>
+        <div class="test-header">
+          <span class="card-label">EMISSION CALCULATOR</span>
+          <span class="test-status pending" id="test-status" role="status" aria-live="polite">Running tests…</span>
+        </div>
+        <ol class="test-list" id="test-results" aria-label="Test results"></ol>
+        <p class="test-note">These tests verify the prototype’s formulas and input handling. They do not validate the illustrative emission factors against an external standard.</p>
+      </section>
+    </main>
+    <script src="{% static 'goodfoot/calculations.js' %}"></script>
+    <script src="{% static 'goodfoot/tests.js' %}"></script>
+  </body>
+</html>

@@ -1,39 +1,45 @@
 # Goodfoot Architecture
 
-This document describes the architecture of the Goodfoot prototype: a dependency-free, browser-based carbon-footprint dashboard for employees and teams.
+This document describes the architecture of the Goodfoot Django application: a carbon-footprint dashboard for employees and teams backed by SQLite.
 
 ## 1. Architectural summary
 
-Goodfoot is a client-side single-page application (SPA) with no backend or database. It renders its interface in the browser, stores entries in `localStorage`, and calculates emissions using a small shared calculator module.
+Goodfoot uses Django to serve the dashboard, validate activity submissions, calculate emissions, and persist employee and activity records in SQLite. The browser retains the presentation layer and calls a small JSON API; it does not keep the authoritative activity data.
 
 The application intentionally keeps the architecture simple:
 
-- A static HTML shell provides the UI structure.
-- JavaScript owns state, event handling, rendering, and local persistence.
-- Shared calculation logic is isolated in a pure module.
-- Tests validate the emissions formulas without requiring a build step.
+- Django templates render the HTML shell and serve the static CSS and JavaScript.
+- JavaScript owns client-side navigation, charts, form previews, and CSV downloads.
+- Django models and migrations define and seed the SQLite-backed data.
+- Server-side validation and calculation are authoritative when creating activity entries.
+- Django tests cover the calculation service and API.
 
 ## 2. System context
 
 ```mermaid
 flowchart LR
     User[User / Employee] --> Browser[Browser UI]
-    Browser --> App[app.js]
-    App --> Calc[calculations.js]
-    App --> Storage[Browser localStorage]
-    App --> Export[CSV export]
-    Browser --> View[index.html]
-    Browser --> Style[styles.css]
+    Browser --> Django[Django application]
+    Django --> Templates[Django templates]
+    Django --> API[JSON API]
+    API --> Models[Employee and Activity models]
+    Models --> DB[(SQLite database)]
+    Django --> Calc[Server emissions calculator]
+    Browser --> JS[Client JavaScript]
+    JS --> Export[CSV export]
+    Django --> Static[CSS and JavaScript assets]
 ```
 
 ### Responsibilities
 
-- `index.html`: page shell, navigation, forms, and content areas.
-- `styles.css`: visual design, layout, charts, cards, and responsive styling.
-- `app.js`: orchestration, data loading, rendering, navigation, validation, and export.
-- `calculations.js`: emission-factor logic for commute, work travel, and remote energy.
-- `localStorage`: local demo persistence for user-created activity entries.
-- `tests.js`: browser-based test suite for the calculation logic.
+- `templates/goodfoot/index.html`: page shell, navigation, forms, and content areas.
+- `static/goodfoot/styles.css`: visual design, layout, charts, cards, and responsive styling.
+- `static/goodfoot/app.js`: client rendering, navigation, estimate preview, and CSV export.
+- `footprints/models.py`: employee and activity database models.
+- `footprints/views.py`: dashboard and JSON API endpoints.
+- `footprints/calculations.py`: authoritative emissions factors and calculation logic.
+- `data/db.sqlite3`: local SQLite database (created by migrations).
+- `footprints/tests.py`: Django tests for calculations and API behavior.
 
 ## 3. Runtime architecture
 
@@ -52,10 +58,12 @@ flowchart TD
     F --> K[renderRecent()]
 
     L[User submits activity form] --> M[getFormEntry()]
-    M --> N[calculateKg(entry)]
-    N --> O[saveEntries()]
-    O --> P[localStorage.setItem()]
-    P --> Q[renderAll()]
+    M --> N[POST /api/activities/]
+    N --> O[Django validates input]
+    O --> P[Server calculate_kg()]
+    P --> Q[SQLite Activity row]
+    Q --> R[Return created activity]
+    R --> S[renderAll()]
 
     R[User exports CSV] --> S[downloadCsv()]
     S --> T[Blob + download link]
@@ -63,12 +71,12 @@ flowchart TD
 
 ### Key runtime behaviors
 
-1. The app boots on page load via `init()`.
-2. The dashboard renders employee totals and team aggregates from the current in-memory `entries` array.
+1. The app boots on page load via `init()` and fetches employees and activities from Django.
+2. The dashboard renders employee totals and team aggregates from API response data.
 3. The activity form collects values for commute, work travel, or remote energy.
-4. The current form is converted into a structured entry and passed to `calculateKg()`.
-5. Valid entries are stored in `localStorage` and then re-rendered.
-6. The app exports either the user’s personal activity log or the aggregated team summary as CSV.
+4. JavaScript previews the estimate; on submit Django independently validates and calculates it.
+5. Django persists accepted entries in SQLite and returns the created entry to the browser.
+6. The app exports either the personal activity log or aggregated team summary as CSV.
 
 ## 4. Domain model
 
@@ -76,17 +84,16 @@ The application centers on a single activity entry structure.
 
 ```mermaid
 classDiagram
-    class ActivityEntry {
-        +id: string
-        +name: string
-        +type: "commute" | "travel" | "remote"
-        +date: string
+    class Activity {
+        +id: integer
+        +activity_type: string
+        +activity_date: date
         +description: string
-        +kg: number
+        +kg_co2e: decimal
         +mode: string
-        +distanceKm: number
-        +days: number
-        +kwhPerDay: number
+        +distance_km: decimal
+        +days: integer
+        +kwh_per_day: decimal
     }
 
     class Employee { 
@@ -98,11 +105,11 @@ classDiagram
 
     class CalculationModule {
         +FACTORS
-        +calculateKg(entry): number
+        +calculate_kg(activity): Decimal
     }
 
-    ActivityEntry --> CalculationModule
-    Employee --> ActivityEntry
+    Employee "1" --> "many" Activity : activities
+    Activity --> CalculationModule : calculated by
 ```
 
 ### Entry types
@@ -117,30 +124,33 @@ classDiagram
 sequenceDiagram
     participant U as User
     participant UI as app.js
-    participant C as calculations.js
-    participant S as localStorage
+    participant D as Django API
+    participant C as Server calculator
+    participant S as SQLite
 
     U->>UI: Add activity
     UI->>UI: Validate form
-    UI->>C: calculateKg(entry)
-    C-->>UI: kg CO2e value
-    UI->>UI: Build entry object
-    UI->>S: saveEntries()
-    S-->>UI: Persisted
+    UI->>D: POST JSON with CSRF token
+    D->>D: Validate employee, type, mode, date and values
+    D->>C: calculate_kg()
+    C-->>D: kg CO2e value
+    D->>S: Insert Activity row
+    S-->>D: Persisted row
+    D-->>UI: JSON activity response
     UI->>UI: renderAll()
     UI-->>U: Updated dashboard
 ```
 
 ### Persistence model
 
-The prototype persists local state using browser storage:
+Activity state is persisted in SQLite:
 
-- `STORAGE_KEY = "goodfoot-demo-activities-v1"`
-- Entries are stored as JSON under this key.
-- On first visit, a demo dataset is generated and saved.
-- A corrupted or missing value falls back to seeded demo data.
+- `Employee` records identify the demo employees and teams.
+- `Activity` rows retain the input values, date, description, and calculated emissions.
+- `python manage.py migrate` creates the tables and seeds the initial demo dataset.
+- Docker Compose mounts the database file in the named `goodfoot_data` volume.
 
-This design supports offline demo use without a backend, but it does not provide multi-user synchronization or shared data ownership.
+Entries are shared by users of the same Django instance. SQLite and the included development server are intended for local demonstrations, not high-concurrency or production use.
 
 ## 6. UI composition
 
@@ -187,7 +197,7 @@ flowchart LR
 
 ### Emission factors
 
-Illustrative factors are declared in `calculations.js`:
+Illustrative factors are declared on the server in `footprints/calculations.py`; the browser calculator mirrors them only for the live estimate preview:
 
 - Commute: car 0.192, bus 0.105, train 0.041, bike 0, walk 0
 - Travel: car 0.192, train 0.035, flight 0.255
@@ -200,31 +210,31 @@ These values are placeholders for prototype demonstration and are not production
 ```mermaid
 flowchart LR
     Dev[Developer / repo] --> Compose[Docker Compose]
-    Compose --> Nginx[Nginx container]
-    Nginx --> Browser[Browser loads index.html]
-    Browser --> App[Client-side app]
-    App --> DeviceStorage[Device localStorage]
+    Compose --> Django[Django container]
+    Django --> SQLite[(Persistent SQLite volume)]
+    Browser[Browser] --> Django
+    Django --> Template[Rendered template]
+    Template --> Browser
     Browser --> User[End user]
 ```
 
 ### Deployment characteristics
 
-- The app is static and can be hosted on GitHub Pages, Netlify, or any static file server.
-- `docker-compose.yml` runs `nginx:alpine`, serves the project directory read-only on port 8080, and does not require an image build.
-- Start it with `docker compose up`, then open `http://localhost:8080`.
-- State is isolated per browser/device, which is suitable for a demo but not for shared organizational tracking.
-- The prototype intentionally avoids authentication, authorization, and cross-user synchronization.
+- `docker-compose.yml` builds and runs the Django application on port 8080.
+- SQLite data persists in a named Docker volume across container recreation.
+- Migrations run when the Compose service starts.
+- The prototype intentionally has no authentication or authorization; do not expose it publicly.
 
 ## 9. Testing architecture
 
-The project includes a lightweight browser-based test file that verifies the calculation formulas.
+The project includes Django tests and a lightweight browser test page for the calculation formulas.
 
 ```mermaid
 flowchart TD
-    tests[tests.js] --> assertions[expectKg assertions]
-    assertions --> calc[calculateKg()]
-    calc --> results[Test result list]
-    results --> summary[Pass/fail summary]
+    manage[python manage.py test] --> DjangoTests[footprints/tests.py]
+    DjangoTests --> Calc[Server calculation tests]
+    DjangoTests --> API[API persistence and validation tests]
+    BrowserTests[/tests/] --> BrowserCalc[Client preview calculator]
 ```
 
 The tests cover:
@@ -233,23 +243,21 @@ The tests cover:
 - travel distances and flight factors
 - remote-energy calculations
 - negative and missing input handling
-- immutability of the factor tables
+- API writes and invalid input rejection
 
 ## 10. Architectural trade-offs
 
 ### Strengths
 
-- Extremely simple to run and reason about
-- Fast to prototype and test
-- Clear separation between rendering, calculation, and persistence
-- Easy to host in static infrastructure
+- Simple local setup with Python and SQLite
+- Server-side validation and authoritative emissions calculations
+- Shared persisted data across browsers using one server instance
+- Clear separation between Django data handling and browser presentation
 
 ### Constraints
 
-- No shared team data store
-- No real authentication or access control
-- No robust validation at the server layer
-- No data synchronization across devices
+- No authentication or access control
+- SQLite and Django's development server are not production deployment settings
 - Calculation factors are illustrative and not audited for regulatory or reporting use
 
 ## 11. Recommended future evolution
@@ -264,4 +272,4 @@ A production version would likely add:
 
 ## 12. Conclusion
 
-Goodfoot is a deliberately minimal, transparent architecture designed to demonstrate work-related carbon estimation in a browser. The separation of concerns is clear: UI in HTML/CSS/JS, calculation logic in a reusable module, data in browser storage, and verification in a lightweight test harness. This makes the project easy to understand, easy to run locally, and a solid foundation for future enterprise features.
+Goodfoot is a deliberately minimal, transparent architecture designed to demonstrate work-related carbon estimation through a Django application. The UI remains in HTML/CSS/JS, while Django owns validation, calculations, and SQLite persistence. This keeps the prototype easy to understand and provides a path toward more complete enterprise features.

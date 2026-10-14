@@ -1,0 +1,209 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f6f8f4">
+    <meta name="description" content="A simple, transparent view of your work-related carbon footprint.">
+    <title>Goodfoot — Employee footprint</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'goodfoot/styles.css' %}">
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Main navigation">
+        <a class="brand" href="#" aria-label="Goodfoot home">
+          <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M23.8 5.4C14.5 5.7 7.3 9.6 7.3 18.2c0 4.6 3.1 8.1 7.5 8.1 8.2 0 10.4-10.1 9-20.9ZM8.5 25.8c3.7-5.3 7.5-9.1 13-12.8" /></svg></span>
+          <span>goodfoot<span class="brand-period">.</span></span>
+        </a>
+
+        <div class="workspace-label">WORKSPACE</div>
+        <div class="workspace-switcher">
+          <span class="workspace-icon">N</span>
+          <span class="workspace-copy"><strong>Northstar Studio</strong><small>Climate workspace</small></span>
+          <span class="switch-chevron" aria-hidden="true">⌄</span>
+        </div>
+
+        <div class="nav-label">MENU</div>
+        <nav class="nav-list">
+          <button class="nav-item active" data-view="dashboard"><span class="nav-icon">◫</span>My footprint</button>
+          <button class="nav-item" data-view="team"><span class="nav-icon">◉</span>Team overview <span class="nav-count">8</span></button>
+          <button class="nav-item" data-view="activity"><span class="nav-icon">＋</span>Add activity</button>
+        </nav>
+
+        <div class="nav-label resources-label">RESOURCES</div>
+        <nav class="nav-list">
+          <button class="nav-item" data-view="factors"><span class="nav-icon">◈</span>How we calculate</button>
+        </nav>
+
+        <div class="sidebar-bottom">
+          <div class="side-note">
+            <span class="note-spark">✳</span>
+            <strong>Small steps add up.</strong>
+            <p>Every entry helps us see where we can make a difference together.</p>
+          </div>
+          <div class="profile">
+            <span class="avatar avatar-jordan">JL</span>
+            <span class="profile-copy"><strong>Jordan Lee</strong><small>People &amp; Culture</small></span>
+            <span class="profile-menu" aria-hidden="true">···</span>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main-area">
+        <header class="topbar">
+          <div class="breadcrumb"><span>Northstar Studio</span><span class="crumb-slash">/</span><strong id="breadcrumb-current">My footprint</strong></div>
+          <div class="topbar-right">
+            <span class="period-label"><span class="period-dot"></span>Reporting period</span>
+            <button class="period-button" type="button">October 2026 <span aria-hidden="true">⌄</span></button>
+            <button class="icon-button" id="export-button" type="button" aria-label="Export activity as CSV" title="Export activity as CSV"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0 4-4m-4 4-4-4M5 16v4h14v-4" /></svg></button>
+          </div>
+        </header>
+
+        <div class="content-wrap">
+          <section class="view-panel active" id="view-dashboard" aria-labelledby="dashboard-title">
+            <div class="page-heading">
+              <div>
+                <div class="eyebrow"><span class="eyebrow-line"></span> YOUR IMPACT, IN VIEW</div>
+                <h1 id="dashboard-title">Good morning, Jordan <span class="wave">✳</span></h1>
+                <p class="page-subtitle">Here's your work-related footprint for October. Every little bit of awareness counts.</p>
+              </div>
+              <button class="button button-primary" type="button" data-go="activity"><span class="button-plus">＋</span> Log an activity</button>
+            </div>
+
+            <div class="dashboard-grid">
+              <article class="card footprint-card">
+                <div class="card-topline"><span class="card-label">YOUR FOOTPRINT</span><span class="live-pill"><i></i> THIS MONTH</span></div>
+                <div class="footprint-main"><span class="footprint-value" id="personal-total">—</span><span class="footprint-unit">kg CO<sub>2</sub>e</span></div>
+                <div class="comparison"><span class="comparison-icon">↘</span><span id="personal-comparison">Looking good — keep logging to see your trend.</span></div>
+                <div class="footprint-chart" id="personal-chart" aria-label="Your recent weekly footprint trend"></div>
+                <div class="chart-caption"><span>WEEKLY TREND</span><span>Last 5 weeks</span></div>
+              </article>
+
+              <div class="stat-stack">
+                <article class="card stat-card">
+                  <span class="stat-icon commute-icon" aria-hidden="true">↗</span>
+                  <div class="stat-heading"><span class="card-label">COMMUTE</span><span class="stat-change">THIS MONTH</span></div>
+                  <div class="stat-value"><span id="commute-total">—</span> <small>kg CO<sub>2</sub>e</small></div>
+                  <div class="stat-foot"><span id="commute-detail">Your daily journey</span><span class="mini-spark commute-spark" aria-hidden="true">▁▂▂▃▂▂▁</span></div>
+                </article>
+                <article class="card stat-card">
+                  <span class="stat-icon travel-icon" aria-hidden="true">✈</span>
+                  <div class="stat-heading"><span class="card-label">WORK TRAVEL</span><span class="stat-change">THIS MONTH</span></div>
+                  <div class="stat-value"><span id="travel-total">—</span> <small>kg CO<sub>2</sub>e</small></div>
+                  <div class="stat-foot"><span id="travel-detail">Trips for work</span><span class="mini-spark travel-spark" aria-hidden="true">▁▁▂▁▃▂▁</span></div>
+                </article>
+                <article class="card stat-card">
+                  <span class="stat-icon home-icon" aria-hidden="true">⌂</span>
+                  <div class="stat-heading"><span class="card-label">REMOTE ENERGY</span><span class="stat-change">THIS MONTH</span></div>
+                  <div class="stat-value"><span id="remote-total">—</span> <small>kg CO<sub>2</sub>e</small></div>
+                  <div class="stat-foot"><span id="remote-detail">Energy while working at home</span><span class="mini-spark home-spark" aria-hidden="true">▁▂▁▂▃▂▂</span></div>
+                </article>
+              </div>
+
+              <article class="card breakdown-card">
+                <div class="card-header">
+                  <div><span class="card-label">WHERE IT COMES FROM</span><h2>Your breakdown</h2></div>
+                  <span class="card-menu-mark" aria-hidden="true">···</span>
+                </div>
+                <div class="breakdown-chart" id="breakdown-chart"></div>
+                <div class="legend">
+                  <span><i class="legend-dot dot-commute"></i>Commute</span>
+                  <span><i class="legend-dot dot-travel"></i>Work travel</span>
+                  <span><i class="legend-dot dot-remote"></i>Remote energy</span>
+                </div>
+                <div class="breakdown-note"><span>✳</span><span id="breakdown-insight">Log a few activities to see what makes up your footprint.</span></div>
+              </article>
+
+              <article class="card activity-card">
+                <div class="card-header">
+                  <div><span class="card-label">RECENT ACTIVITY</span><h2>Your latest entries</h2></div>
+                  <button class="text-button" type="button" data-go="activity">View all <span aria-hidden="true">→</span></button>
+                </div>
+                <div id="recent-activities" class="activity-list"></div>
+              </article>
+            </div>
+            <div class="footnote"><span class="footnote-icon">ⓘ</span> Estimates use illustrative emission factors. Your real footprint may vary based on location, vehicle, and energy provider. <button class="text-button" type="button" data-go="factors">See how we calculate <span aria-hidden="true">→</span></button></div>
+          </section>
+
+          <section class="view-panel" id="view-team" aria-labelledby="team-title">
+            <div class="page-heading">
+              <div><div class="eyebrow"><span class="eyebrow-line"></span> BETTER, TOGETHER</div><h1 id="team-title">Team overview <span class="wave">✳</span></h1><p class="page-subtitle">A team-wide view of the activities logged this month. Individual entries stay private.</p></div>
+              <button class="button button-secondary" id="team-export-button" type="button">↓&nbsp; Export team data</button>
+            </div>
+            <div class="team-summary-grid">
+              <article class="card team-summary"><span class="card-label">TEAM FOOTPRINT</span><div class="team-summary-value"><span id="team-total">—</span><small>kg CO<sub>2</sub>e</small></div><span class="team-summary-note">Across logged activities this month</span></article>
+              <article class="card team-summary"><span class="card-label">PEOPLE LOGGING</span><div class="team-summary-value"><span id="team-people">—</span><small>of 8</small></div><span class="team-summary-note">Colleagues contributing this month</span></article>
+              <article class="card team-summary"><span class="card-label">ACTIVITIES LOGGED</span><div class="team-summary-value"><span id="team-entries">—</span><small>entries</small></div><span class="team-summary-note">Commutes, trips &amp; home energy</span></article>
+            </div>
+            <div class="team-content-grid">
+              <article class="card team-chart-card">
+                <div class="card-header"><div><span class="card-label">TEAM BREAKDOWN</span><h2>Emissions by activity</h2></div><span class="chart-unit">kg CO<sub>2</sub>e</span></div>
+                <div class="team-bars" id="team-bars"></div>
+                <div class="team-chart-legend"><span><i class="legend-dot dot-commute"></i>Commute</span><span><i class="legend-dot dot-travel"></i>Work travel</span><span><i class="legend-dot dot-remote"></i>Remote energy</span></div>
+              </article>
+              <article class="card team-list-card">
+                <div class="card-header"><div><span class="card-label">TEAM PARTICIPATION</span><h2>Team activity pulse</h2></div><span class="privacy-pill">● AGGREGATED</span></div>
+                <div class="team-member-list" id="team-members"></div>
+              </article>
+            </div>
+            <div class="footnote"><span class="footnote-icon">ⓘ</span> Team totals include demo data. A real deployment should only show sufficiently large, privacy-protected groups.</div>
+          </section>
+
+          <section class="view-panel" id="view-activity" aria-labelledby="activity-title">
+            <div class="page-heading">
+              <div><div class="eyebrow"><span class="eyebrow-line"></span> EVERY JOURNEY COUNTS</div><h1 id="activity-title">Log an activity <span class="wave">✳</span></h1><p class="page-subtitle">A few details help us make a better estimate. Your activity is saved to the shared demo database.</p></div>
+              <span class="save-local"><span></span> Saved to database</span>
+            </div>
+            <div class="activity-form-layout">
+              <form class="card activity-form" id="activity-form">
+                {% csrf_token %}
+                <label class="form-label" for="employee-select">WHO IS THIS FOR?</label>
+                <select id="employee-select" class="form-control"></select>
+                <fieldset class="activity-type-fieldset">
+                  <legend class="form-label">WHAT WOULD YOU LIKE TO LOG?</legend>
+                  <div class="activity-type-options">
+                    <label class="type-option selected"><input type="radio" name="activity-type" value="commute" checked><span class="type-option-icon commute-icon">↗</span><span><strong>Commute</strong><small>Your journey to work</small></span></label>
+                    <label class="type-option"><input type="radio" name="activity-type" value="travel"><span class="type-option-icon travel-icon">✈</span><span><strong>Work travel</strong><small>Business trips</small></span></label>
+                    <label class="type-option"><input type="radio" name="activity-type" value="remote"><span class="type-option-icon home-icon">⌂</span><span><strong>Remote energy</strong><small>Working from home</small></span></label>
+                  </div>
+                </fieldset>
+                <div id="type-fields"></div>
+                <div class="form-row">
+                  <div class="form-field"><label class="form-label" for="activity-date">DATE</label><input class="form-control" id="activity-date" type="date" required></div>
+                </div>
+                <div class="estimate-preview"><span class="estimate-icon">✳</span><span><strong>Your estimate</strong><small>We’ll calculate this using the factors shown in <button class="inline-link" type="button" data-go="factors">How we calculate</button>.</small></span><span class="estimate-value" id="estimate-value">— <small>kg CO<sub>2</sub>e</small></span></div>
+                <button class="button button-primary submit-button" type="submit">Save activity <span aria-hidden="true">→</span></button>
+                <p class="form-message" id="form-message" role="status"></p>
+              </form>
+              <aside class="activity-side">
+                <article class="card tip-card"><span class="tip-icon">✳</span><span class="card-label">A LITTLE CONTEXT</span><h2>Estimates, not judgements.</h2><p>Everyone’s footprint looks different. These numbers are here to help us spot patterns and find opportunities as a team — not to measure individuals against each other.</p><button class="text-button" type="button" data-go="factors">Learn about our approach <span aria-hidden="true">→</span></button></article>
+                <article class="card this-month-card"><span class="card-label">YOUR ENTRIES THIS MONTH</span><div class="month-entry-value"><span id="my-entry-count">0</span><small>activities</small></div><div class="month-entry-note">Thanks for adding your data to the picture.</div></article>
+              </aside>
+            </div>
+          </section>
+
+          <section class="view-panel" id="view-factors" aria-labelledby="factors-title">
+            <div class="page-heading">
+              <div><div class="eyebrow"><span class="eyebrow-line"></span> OPEN BY DESIGN</div><h1 id="factors-title">How we calculate <span class="wave">✳</span></h1><p class="page-subtitle">A footprint estimate should be easy to understand. Here’s what goes into each number.</p></div>
+            </div>
+            <div class="factor-intro card"><span class="factor-intro-icon">✳</span><div><strong>These are illustrative demo factors.</strong><p>They help show how the app works; they are not a certified inventory or a claim about your actual emissions. Replace them with current, location-specific factors before making business decisions.</p></div></div>
+            <div class="factor-grid">
+              <article class="card factor-card"><span class="factor-icon commute-icon">↗</span><span class="card-label">COMMUTING</span><h2>Distance × days × mode</h2><p>We use the one-way distance and multiply it by two for a return journey, then by the number of commute days.</p><div class="factor-table"><div><span>Car</span><strong>0.192 kg / km</strong></div><div><span>Bus</span><strong>0.105 kg / km</strong></div><div><span>Train</span><strong>0.041 kg / km</strong></div><div><span>Bike or walking</span><strong>0 kg / km</strong></div></div></article>
+              <article class="card factor-card"><span class="factor-icon travel-icon">✈</span><span class="card-label">WORK TRAVEL</span><h2>Trip distance × mode</h2><p>Enter the total journey distance for the work trip. For flights, use the total distance across all legs.</p><div class="factor-table"><div><span>Car</span><strong>0.192 kg / km</strong></div><div><span>Train</span><strong>0.035 kg / km</strong></div><div><span>Flight</span><strong>0.255 kg / km</strong></div></div></article>
+              <article class="card factor-card"><span class="factor-icon home-icon">⌂</span><span class="card-label">REMOTE ENERGY</span><h2>Energy × days × grid factor</h2><p>Estimate extra home energy used while working remotely. We multiply this by an illustrative electricity factor.</p><div class="factor-table"><div><span>Home energy</span><strong>1.5 kWh / day</strong></div><div><span>Electricity</span><strong>0.207 kg / kWh</strong></div><div class="factor-result"><span>Example: 10 days</span><strong>3.1 kg CO<sub>2</sub>e</strong></div></div></article>
+            </div>
+            <div class="factor-caveat"><span>ⓘ</span><p><strong>Not a formal carbon inventory.</strong> These simple estimates exclude many lifecycle effects and other sources of workplace emissions. Factors are fixed illustrative values in this prototype. A production version should cite trusted, current sources, support regional factors, and keep a record of factor versions.</p></div>
+          </section>
+        </div>
+        <footer class="app-footer"><span>Made for a lighter footprint <span class="footer-leaf">✳</span></span><span>GOODFOOT DEMO <i></i> DJANGO + SQLITE</span></footer>
+      </main>
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    </div>
+    <script src="{% static 'goodfoot/calculations.js' %}"></script>
+    <script src="{% static 'goodfoot/app.js' %}"></script>
+  </body>
+</html>

@@ -1,32 +1,45 @@
 # Goodfoot — employee carbon-footprint demo
 
-A responsive, dependency-free prototype for capturing and exploring work-related carbon estimates. It covers commuting, work travel, and remote-work energy, with individual and team views.
+A responsive Django application for capturing and exploring work-related carbon estimates. It covers commuting, work travel, and remote-work energy, with individual and team views. Django stores employee and activity records in SQLite.
 
 ## Run locally
 
-Open `index.html` in a modern browser. No install, build step, backend, or API key is needed. The prototype preloads sample data and stores new entries in browser local storage on that device.
-
-You can also serve this folder with any static file server. For example, if Python is installed:
+Install Python 3.10 or newer, then from this folder create and activate a virtual environment and install the dependencies:
 
 ```powershell
-python -m http.server 8000
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
 ```
 
-Then open `http://localhost:8000`.
+Apply the migrations and start Django:
+
+```powershell
+python manage.py migrate
+python manage.py runserver
+```
+
+Open `http://127.0.0.1:8000`. Migrations create the SQLite database in `data/db.sqlite3` and seed the demo employees and activities.
 
 ## Run with Docker Compose
 
-Start the Nginx web server from this folder:
+Build and start the Django web app from this folder:
 
 ```powershell
-docker compose up
+docker compose up --build
 ```
 
-Then open `http://localhost:8080`. The Compose service mounts the project files read-only into Nginx, so changes to the static files are served without rebuilding an image. Stop the server with `Ctrl+C`, or run `docker compose down` in another terminal.
+Open `http://localhost:8080`. SQLite is stored in the `goodfoot_data` Docker volume and survives container recreation. Stop with `Ctrl+C`, or run `docker compose down`. To remove the stored database as well, run `docker compose down --volumes`.
 
 ## Run the unit tests
 
-Open `tests.html` in a modern browser. The dependency-free test runner checks the shared emissions calculator and reports each result on the page. You can run it locally from `file://` or from the same static file server.
+Run the Django tests with:
+
+```powershell
+python manage.py test
+```
+
+The browser-based calculator tests are also available at `http://127.0.0.1:8000/tests/`.
 
 ## Demo flow
 
@@ -39,13 +52,13 @@ Open `tests.html` in a modern browser. The dependency-free test runner checks th
 
 ## Local and cloud behavior
 
-The same files run locally and can be published to static hosting (for example, GitHub Pages, Netlify, or Cloudflare Pages). A static deployment has no server component; each browser stores its own data. Data entered on one device does **not** synchronize to other users or to a shared team database.
+Activity data is held in the server's SQLite database and shared by users of that running instance. The included configuration is for local development and demos; production deployment needs a production-grade WSGI server, secure environment-specific settings, backups, and authentication/access controls.
 
-This is intentionally a prototype rather than the planned production stack: no authentication, access control, shared database, or server-side storage is included. Do not enter real employee or sensitive information.
+This remains a prototype: no authentication or access control is included. Do not expose it publicly or enter sensitive employee information.
 
 ## Calculation assumptions
 
-The app uses fixed, illustrative factors in `app.js`:
+The app uses fixed, illustrative factors in `footprints/calculations.py` (and mirrors them in the browser preview calculator):
 
 - Commute (return distance × commute days): car 0.192, bus 0.105, train 0.041, bike/walk 0 kg CO2e per passenger-km.
 - Work travel (total trip distance): car 0.192, train 0.035, flight 0.255 kg CO2e per passenger-km.
@@ -56,4 +69,4 @@ These values are for demonstrating the calculation flow only. They are not verif
 
 ## Reset demo data
 
-The first visit seeds sample data. To reset to the original demo, clear this site's local storage in your browser developer tools and reload.
+For a local run, stop Django, delete `data/db.sqlite3`, then run `python manage.py migrate` to recreate the database and seed the original demo data. With Docker Compose, run `docker compose down --volumes` and then `docker compose up --build`.

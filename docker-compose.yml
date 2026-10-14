@@ -1,8 +1,14 @@
 services:
   web:
-    image: nginx:alpine
+    build: .
     ports:
-      - "8080:80"
+      - "8080:8000"
+    environment:
+      DJANGO_DEBUG: "1"
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,web
     volumes:
-      - ./:/usr/share/nginx/html:ro
+      - goodfoot_data:/app/data
     restart: unless-stopped
+
+volumes:
+  goodfoot_data:
